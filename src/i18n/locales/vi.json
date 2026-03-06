@@ -72,6 +72,7 @@
     "update": "Cập Nhật",
     "confirm_delete": "Xóa sự cố này?",
     "no_data": "Không có sự cố nào",
+    "search": "Tìm kiếm sự cố...",
     "other": "Khác",
     "custom_asset_placeholder": "Nhập tên tài sản...",
     "error_required": "Tài sản (hoặc tên tài sản khác) và mô tả là bắt buộc",
@@ -97,6 +98,7 @@
     "update": "Cập Nhật",
     "confirm_delete": "Xóa tài sản này?",
     "no_data": "Không có tài sản nào",
+    "search": "Tìm kiếm tài sản...",
     "error_required": "Mã, tên và vị trí là bắt buộc",
     "error_save": "Lưu tài sản thất bại"
   },

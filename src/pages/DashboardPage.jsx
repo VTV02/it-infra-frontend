@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
@@ -20,11 +21,12 @@ export default function DashboardPage() {
   const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     api.get('/dashboard/stats')
       .then((res) => setStats(res.data.data))
-      .catch(console.error)
+      .catch((err) => setToast({ message: err.message || 'Failed to load dashboard data', type: 'error' }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -120,6 +122,7 @@ export default function DashboardPage() {
           <div className="max-w-[200px] md:max-w-xs mx-auto"><Doughnut data={assetTypeData} /></div>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }

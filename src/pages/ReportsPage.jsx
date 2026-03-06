@@ -5,6 +5,7 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, PointElement, LineElement, Title, Tooltip, Legend);
@@ -14,11 +15,12 @@ export default function ReportsPage() {
   const [stats, setStats] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     Promise.all([api.get('/dashboard/stats'), api.get('/incidents')])
       .then(([statsRes, incRes]) => { setStats(statsRes.data.data); setIncidents(incRes.data.data); })
-      .catch(console.error)
+      .catch((err) => setToast({ message: err.message || 'Failed to load report data', type: 'error' }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -112,6 +114,7 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }

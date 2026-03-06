@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -88,13 +89,16 @@ export default function DeploymentPlanPage() {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toast, setToast] = useState(null);
   const [showExport, setShowExport] = useState(false);
   const [exportType, setExportType] = useState('week');
   const [exportDate, setExportDate] = useState(today());
 
   const fetchData = async () => {
-    const res = await api.get('/deployment-plans');
-    setPlans(res.data.data);
+    try {
+      const res = await api.get('/deployment-plans');
+      setPlans(res.data.data);
+    } catch (err) { setToast({ message: err.message || 'Failed to load deployment plans', type: 'error' }); }
   };
   useEffect(() => { fetchData(); }, []);
 
@@ -114,8 +118,8 @@ export default function DeploymentPlanPage() {
       status: form.status,
     };
     try {
-      if (editId) { await api.put(`/deployment-plans/${editId}`, payload); }
-      else { await api.post('/deployment-plans', payload); }
+      if (editId) { await api.put(`/deployment-plans/${editId}`, payload); setToast({ message: t('deployment.update_success') || 'Plan updated successfully', type: 'success' }); }
+      else { await api.post('/deployment-plans', payload); setToast({ message: t('deployment.create_success') || 'Plan created successfully', type: 'success' }); }
       setShowForm(false); setForm(emptyForm); setEditId(null); fetchData();
     } catch (err) { setError(err.response?.data?.message || t('deployment.error_save')); }
   };
@@ -138,6 +142,7 @@ export default function DeploymentPlanPage() {
     if (!confirmDelete) return;
     await api.delete(`/deployment-plans/${confirmDelete}`);
     setConfirmDelete(null);
+    setToast({ message: t('deployment.delete_success') || 'Plan deleted successfully', type: 'success' });
     fetchData();
   };
 
@@ -374,6 +379,7 @@ export default function DeploymentPlanPage() {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(null)}
       />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }

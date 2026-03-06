@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -26,7 +27,7 @@ const predefinedAreas = [
   'VP55',
 ];
 
-const emptyForm = { asset: '', customAsset: '', area: '', customArea: '', description: '', status: 'New' };
+const emptyForm = { asset: '', customAsset: '', area: '', customArea: '', description: '', priority: 'Medium', status: 'New' };
 
 export default function IncidentsPage() {
   const { t } = useTranslation();
@@ -38,16 +39,30 @@ export default function IncidentsPage() {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [incRes, assetRes] = await Promise.all([api.get('/incidents'), api.get('/assets')]);
       setIncidents(incRes.data.data);
       setAssets(assetRes.data.data);
-    } catch (err) { console.error(err); }
+    } catch (err) { setToast({ message: err.message || 'Failed to load incidents', type: 'error' }); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const filtered = incidents.filter((inc) => {
+    const matchSearch = !search || [
+      inc.asset?.assetCode, inc.asset?.name, inc.customAsset, inc.description, inc.area, inc.customArea, inc.reportedBy?.name
+    ].some(v => v?.toLowerCase().includes(search.toLowerCase()));
+    const matchStatus = !filterStatus || inc.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -70,8 +85,8 @@ export default function IncidentsPage() {
     }
 
     try {
-      if (editId) { await api.put(`/incidents/${editId}`, payload); }
-      else { await api.post('/incidents', payload); }
+      if (editId) { await api.put(`/incidents/${editId}`, payload); setToast({ message: t('incidents.update_success') || 'Incident updated successfully', type: 'success' }); }
+      else { await api.post('/incidents', payload); setToast({ message: t('incidents.create_success') || 'Incident created successfully', type: 'success' }); }
       setShowForm(false); setForm(emptyForm); setEditId(null); fetchData();
     } catch (err) { setError(err.response?.data?.message || t('incidents.error_save')); }
   };
@@ -84,6 +99,7 @@ export default function IncidentsPage() {
       area: areaVal,
       customArea: inc.customArea || '',
       description: inc.description,
+      priority: inc.priority || 'Medium',
       status: inc.status,
     });
     setEditId(inc._id); setShowForm(true);
@@ -94,6 +110,7 @@ export default function IncidentsPage() {
     if (!confirmDelete) return;
     await api.delete(`/incidents/${confirmDelete}`);
     setConfirmDelete(null);
+    setToast({ message: t('incidents.delete_success') || 'Incident deleted successfully', type: 'success' });
     fetchData();
   };
 
@@ -105,6 +122,17 @@ export default function IncidentsPage() {
           className="px-3 py-1.5 md:px-4 md:py-2 bg-primary-600 text-cream-100 rounded-lg hover:bg-primary-700 transition-colors text-sm md:text-base">
           {t('incidents.new')}
         </button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <input value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('incidents.search') || 'Tìm kiếm...'}
+          className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-200" />
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-200">
+          <option value="">{t('incidents.status')} - All</option>
+          {['New', 'In Progress', 'Resolved', 'Closed'].map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
+        </select>
       </div>
 
       {showForm && (
@@ -140,6 +168,13 @@ export default function IncidentsPage() {
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-2"
                     placeholder={t('incidents.custom_area_placeholder')} />
                 )}
+              </div>
+              <div>
+                <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">{t('incidents.priority')}</label>
+                <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                  {['Low', 'Medium', 'High', 'Critical'].map((p) => <option key={p} value={p}>{t(`priority.${p}`)}</option>)}
+                </select>
               </div>
               <div>
                 <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">{t('incidents.description')}</label>
@@ -183,7 +218,9 @@ export default function IncidentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {incidents.map((inc) => (
+              {loading ? [...Array(5)].map((_, i) => (
+                <tr key={i}><td colSpan="7" className="px-6 py-4"><div className="h-4 bg-gray-200 rounded animate-pulse"></div></td></tr>
+              )) : filtered.map((inc) => (
                 <tr key={inc._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium">
                     {inc.asset ? inc.asset.assetCode : <span className="text-orange-600 italic">{inc.customAsset}</span>}
@@ -207,7 +244,7 @@ export default function IncidentsPage() {
                   )}
                 </tr>
               ))}
-              {incidents.length === 0 && (
+              {!loading && filtered.length === 0 && (
                 <tr><td colSpan="7" className="px-6 py-8 text-center text-gray-400">{t('incidents.no_data')}</td></tr>
               )}
             </tbody>
@@ -217,7 +254,13 @@ export default function IncidentsPage() {
 
       {/* Mobile card layout */}
       <div className="md:hidden space-y-3">
-        {incidents.map((inc) => (
+        {loading ? [...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-4 space-y-2 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-3 bg-gray-200 rounded w-full"></div>
+          </div>
+        )) : filtered.map((inc) => (
           <div key={inc._id} className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
@@ -243,7 +286,7 @@ export default function IncidentsPage() {
             )}
           </div>
         ))}
-        {incidents.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-12 text-gray-400 text-sm">{t('incidents.no_data')}</div>
         )}
       </div>
@@ -253,6 +296,7 @@ export default function IncidentsPage() {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(null)}
       />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }

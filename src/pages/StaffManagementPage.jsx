@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import api from '../utils/api';
 
 const statusColors = {
@@ -21,11 +22,12 @@ export default function StaffManagementPage() {
   const [resetModal, setResetModal] = useState(null);
   const [newPassword, setNewPassword] = useState('');
   const [resetMsg, setResetMsg] = useState('');
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     api.get('/dashboard/staff-overview')
       .then((res) => setData(res.data.data))
-      .catch(console.error)
+      .catch((err) => setToast({ message: err.message || 'Failed to load staff data', type: 'error' }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -42,7 +44,7 @@ export default function StaffManagementPage() {
       const res = await api.get(`/dashboard/staff/${member._id}/incidents`);
       setIncidents(res.data.data.incidents);
     } catch (err) {
-      console.error(err);
+      setToast({ message: err.message || 'Failed to load staff incidents', type: 'error' });
     } finally {
       setDetailLoading(false);
     }
@@ -230,6 +232,7 @@ export default function StaffManagementPage() {
           )}
         </div>
       )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }

@@ -72,6 +72,7 @@
     "update": "Update",
     "confirm_delete": "Delete this incident?",
     "no_data": "No incidents found",
+    "search": "Search incidents...",
     "other": "Other",
     "custom_asset_placeholder": "Enter asset name...",
     "error_required": "Asset (or custom asset name) and description are required",
@@ -97,6 +98,7 @@
     "update": "Update",
     "confirm_delete": "Delete this asset?",
     "no_data": "No assets found",
+    "search": "Search assets...",
     "error_required": "Code, name, and location are required",
     "error_save": "Failed to save asset"
   },

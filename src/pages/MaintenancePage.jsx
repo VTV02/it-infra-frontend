@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -31,10 +32,13 @@ export default function MaintenancePage() {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const fetchData = async () => {
-    const [mRes, aRes] = await Promise.all([api.get('/maintenance'), api.get('/assets')]);
-    setRecords(mRes.data.data); setAssets(aRes.data.data);
+    try {
+      const [mRes, aRes] = await Promise.all([api.get('/maintenance'), api.get('/assets')]);
+      setRecords(mRes.data.data); setAssets(aRes.data.data);
+    } catch (err) { setToast({ message: err.message || 'Failed to load maintenance data', type: 'error' }); }
   };
   useEffect(() => { fetchData(); }, []);
 
@@ -57,8 +61,8 @@ export default function MaintenancePage() {
       payload.customArea = undefined;
     }
     try {
-      if (editId) { await api.put(`/maintenance/${editId}`, payload); }
-      else { await api.post('/maintenance', payload); }
+      if (editId) { await api.put(`/maintenance/${editId}`, payload); setToast({ message: t('maintenance.update_success') || 'Record updated successfully', type: 'success' }); }
+      else { await api.post('/maintenance', payload); setToast({ message: t('maintenance.create_success') || 'Record created successfully', type: 'success' }); }
       setShowForm(false); setForm(emptyForm); setEditId(null); fetchData();
     } catch (err) { setError(err.response?.data?.message || t('maintenance.error_save')); }
   };
@@ -75,6 +79,7 @@ export default function MaintenancePage() {
     if (!confirmDelete) return;
     await api.delete(`/maintenance/${confirmDelete}`);
     setConfirmDelete(null);
+    setToast({ message: t('maintenance.delete_success') || 'Record deleted successfully', type: 'success' });
     fetchData();
   };
 
@@ -222,6 +227,7 @@ export default function MaintenancePage() {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(null)}
       />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }

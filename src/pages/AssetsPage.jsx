@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Layout from '../components/Layout';
+import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
@@ -22,16 +23,30 @@ export default function AssetsPage() {
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const fetchAssets = async () => { const res = await api.get('/assets'); setAssets(res.data.data); };
+  const fetchAssets = async () => {
+    try { setLoading(true); const res = await api.get('/assets'); setAssets(res.data.data); }
+    catch (err) { setToast({ message: err.message || 'Failed to load assets', type: 'error' }); }
+    finally { setLoading(false); }
+  };
   useEffect(() => { fetchAssets(); }, []);
+
+  const filtered = assets.filter((a) => {
+    const matchSearch = !search || [a.assetCode, a.name, a.location].some(v => v?.toLowerCase().includes(search.toLowerCase()));
+    const matchStatus = !filterStatus || a.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError('');
     if (!form.assetCode || !form.name || !form.location) { setError(t('assets.error_required')); return; }
     try {
-      if (editId) { await api.put(`/assets/${editId}`, form); }
-      else { await api.post('/assets', form); }
+      if (editId) { await api.put(`/assets/${editId}`, form); setToast({ message: t('assets.update_success') || 'Asset updated successfully', type: 'success' }); }
+      else { await api.post('/assets', form); setToast({ message: t('assets.create_success') || 'Asset created successfully', type: 'success' }); }
       setShowForm(false); setForm(emptyForm); setEditId(null); fetchAssets();
     } catch (err) { setError(err.response?.data?.message || t('assets.error_save')); }
   };
@@ -46,6 +61,7 @@ export default function AssetsPage() {
     if (!confirmDelete) return;
     await api.delete(`/assets/${confirmDelete}`);
     setConfirmDelete(null);
+    setToast({ message: t('assets.delete_success') || 'Asset deleted successfully', type: 'success' });
     fetchAssets();
   };
 
@@ -59,6 +75,17 @@ export default function AssetsPage() {
             {t('assets.new')}
           </button>
         )}
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <input value={search} onChange={(e) => setSearch(e.target.value)}
+          placeholder={t('assets.search') || 'Tìm kiếm...'}
+          className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-200" />
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-800 dark:text-gray-200">
+          <option value="">{t('assets.status')} - All</option>
+          {['Good', 'Warning', 'Broken'].map((s) => <option key={s} value={s}>{t(`status.${s}`)}</option>)}
+        </select>
       </div>
 
       {showForm && (
@@ -138,7 +165,9 @@ export default function AssetsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {assets.map((asset) => (
+              {loading ? [...Array(5)].map((_, i) => (
+                <tr key={i}><td colSpan="8" className="px-6 py-4"><div className="h-4 bg-gray-200 rounded animate-pulse"></div></td></tr>
+              )) : filtered.map((asset) => (
                 <tr key={asset._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 font-medium">{asset.assetCode}</td>
                   <td className="px-6 py-4">{asset.name}</td>
@@ -159,7 +188,7 @@ export default function AssetsPage() {
                   )}
                 </tr>
               ))}
-              {assets.length === 0 && (
+              {!loading && filtered.length === 0 && (
                 <tr><td colSpan="8" className="px-6 py-8 text-center text-gray-400">{t('assets.no_data')}</td></tr>
               )}
             </tbody>
@@ -169,7 +198,13 @@ export default function AssetsPage() {
 
       {/* Mobile card layout */}
       <div className="md:hidden space-y-3">
-        {assets.map((asset) => (
+        {loading ? [...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl shadow-sm p-4 space-y-2 animate-pulse">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-3 bg-gray-200 rounded w-full"></div>
+          </div>
+        )) : filtered.map((asset) => (
           <div key={asset._id} className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
@@ -194,7 +229,7 @@ export default function AssetsPage() {
             )}
           </div>
         ))}
-        {assets.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <div className="text-center py-12 text-gray-400 text-sm">{t('assets.no_data')}</div>
         )}
       </div>
@@ -204,6 +239,7 @@ export default function AssetsPage() {
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete(null)}
       />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </Layout>
   );
 }
