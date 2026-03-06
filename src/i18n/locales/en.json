@@ -240,6 +240,14 @@
     "cancel": "Cancel",
     "ok": "Confirm"
   },
+  "footer": {
+    "department": "Digital Transformation Dept.",
+    "company": "Snuol Complex",
+    "developed_by": "Developed by",
+    "author": "Vo Van Trung",
+    "role": "Operations Supervisor",
+    "rights": "All rights reserved."
+  },
   "asset_type": {
     "Router": "Router",
     "Switch": "Switch",

@@ -240,6 +240,14 @@
     "cancel": "Hủy",
     "ok": "Xác nhận"
   },
+  "footer": {
+    "department": "Phòng Chuyển đổi số",
+    "company": "Khu liên hợp Snuol",
+    "developed_by": "Phát triển bởi",
+    "author": "Võ Văn Trung",
+    "role": "Phụ trách bộ phận vận hành",
+    "rights": "Bảo lưu mọi quyền."
+  },
   "asset_type": {
     "Router": "Bộ Định Tuyến",
     "Switch": "Bộ Chuyển Mạch",
