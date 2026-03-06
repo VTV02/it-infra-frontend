@@ -250,6 +250,14 @@
     "role": "Operations Supervisor",
     "rights": "All rights reserved."
   },
+  "offline": {
+    "no_connection": "No internet connection — Data will sync automatically when online",
+    "syncing": "Syncing data...",
+    "synced": "Synced",
+    "items": "items",
+    "back_online": "Back online",
+    "queued": "Saved offline, will sync when online"
+  },
   "asset_type": {
     "Router": "Router",
     "Switch": "Switch",

@@ -250,6 +250,14 @@
     "role": "Phụ trách bộ phận vận hành",
     "rights": "Bảo lưu mọi quyền."
   },
+  "offline": {
+    "no_connection": "Không có kết nối mạng — Dữ liệu sẽ tự đồng bộ khi có mạng",
+    "syncing": "Đang đồng bộ dữ liệu...",
+    "synced": "Đã đồng bộ",
+    "items": "mục",
+    "back_online": "Đã kết nối lại",
+    "queued": "Đã lưu offline, sẽ đồng bộ khi có mạng"
+  },
   "asset_type": {
     "Router": "Bộ Định Tuyến",
     "Switch": "Bộ Chuyển Mạch",

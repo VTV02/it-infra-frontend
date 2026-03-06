@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import OfflineBar from './components/OfflineBar';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import IncidentsPage from './pages/IncidentsPage';
@@ -12,6 +13,8 @@ import WelcomePage from './pages/WelcomePage';
 
 export default function App() {
   return (
+    <>
+    <OfflineBar />
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
@@ -68,5 +71,6 @@ export default function App() {
       {/* Redirect root to dashboard */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </>
   );
 }
